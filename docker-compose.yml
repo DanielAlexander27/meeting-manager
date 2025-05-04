@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  central-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.central
+    container_name: central-server
+    ports:
+      - "9092:9091"
+
+  alice-white:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    container_name: alice-white
+    ports:
+      - "8081:8081"
+    depends_on:
+      - central-server
+
+  bob-smith:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    container_name: bob-smith
+    ports:
+      - "8082:8081"
+    depends_on:
+      - central-server
+
+  carol-simpson:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    container_name: carol-simpson
+    ports:
+      - "8083:8081"
+    depends_on:
+      - central-server
+
+  david-black:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    container_name: david-black
+    ports:
+      - "8084:8081"
+    depends_on:
+      - central-server
+
+  eva-brown:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    container_name: eva-brown
+    ports:
+      - "8085:8081"
+    depends_on:
+      - central-server

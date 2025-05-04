@@ -15,7 +15,7 @@ public class CentralServer {
         try {
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
-                System.out.println(socket.getPort()); // port associated with the user
+                new Thread(new ClientHandler(socket)).start();
             }
 
         } catch (IOException e) {

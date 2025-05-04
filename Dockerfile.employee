@@ -1,0 +1,6 @@
+FROM openjdk:21
+WORKDIR /app
+COPY ./src/main/java/org/intiandes/employee/EmployeeMain.java .
+RUN javac EmployeeMain.java
+EXPOSE 8081
+CMD ["java", "EmployeeMain"]
