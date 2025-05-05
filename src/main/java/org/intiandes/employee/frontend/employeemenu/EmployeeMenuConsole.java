@@ -9,9 +9,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class EmployeeMenuConsole {
     private static final String dateTimePattern = "yyyy-MM-dd HH:mm:ss";
@@ -34,31 +32,18 @@ public class EmployeeMenuConsole {
         );
     }
 
-//    private static void login() {
-//        System.out.print("Enter your username (e.g., Alice_White): ");
-//        employeeName = scanner.nextLine().trim();
-//
-//        if (employeeName.isEmpty()) {
-//            System.out.println("Invalid username. Please try again.");
-//            login();
-//        } else {
-//            System.out.println("Logged in as: " + employeeName + "\n");
-//        }
-//    }
-
     public void showMenu() {
         int choice = -1;
 
         while (choice != 7) {
-            System.out.println("\n===== MAIN MENU =====");
+            System.out.println("\n======== MAIN MENU ========");
 //            System.out.println("Employee: " + EmployeeMain.EMPLOYEE_NAME);
             System.out.println("1. View scheduled meetings");
             System.out.println("2. Create a new meeting");
             System.out.println("3. Modify a meeting");
-            System.out.println("4. Cancel a meeting");
-            System.out.println("5. Sync meetings with the server");
-            System.out.println("6. Retrieve past meetings");
-            System.out.println("7. Exit");
+            System.out.println("4. Sync meetings with the server");
+            System.out.println("5. Retrieve past meetings");
+            System.out.println("6. Exit");
             System.out.print("Select an option: ");
 
             try {
@@ -85,21 +70,21 @@ public class EmployeeMenuConsole {
         String serializedFileName = "meetings_serialized_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
         String readableFileName = "meetings_readable_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
         File serializedFile = new File(serializedFileName);
-    
+
         System.out.println("\nRetrieving past meetings from local store for " + EmployeeMain.EMPLOYEE_NAME + ":");
-    
+
         if (!serializedFile.exists()) {
             System.out.println("No serialized meetings found.");
             return;
         }
-    
+
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(serializedFile))) {
             List<Meeting> meetings = (List<Meeting>) ois.readObject();
-    
+
             if (meetings.isEmpty()) {
                 System.out.println("No meetings found.");
                 return;
-            }      
+            }
             Meeting.getMeetingsString(meetings);
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error retrieving meetings: " + e.getMessage());
@@ -172,7 +157,7 @@ public class EmployeeMenuConsole {
 
         System.out.println();
 
-        List<String> guestEmployees = new ArrayList<>();
+        Set<String> guestEmployees = new HashSet<>();
         System.out.print("Enter guest employees (comma-separated and with the same values you saw above): ");
         String guestsInput = scanner.nextLine();
 
@@ -184,6 +169,7 @@ public class EmployeeMenuConsole {
                 }
             }
         }
+        guestEmployees.add(EmployeeMain.EMPLOYEE_USERNAME);
 
         System.out.println("\nCreating meeting...\n");
 
@@ -210,22 +196,22 @@ public class EmployeeMenuConsole {
     private void modifyMeeting() {
         String serializedFileName = "meetings_serialized_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
         File serializedFile = new File(serializedFileName);
-    
+
         System.out.println("\nModifying a meeting for " + EmployeeMain.EMPLOYEE_NAME + ":");
-    
+
         if (!serializedFile.exists()) {
             System.out.println("No serialized meetings found.");
             return;
         }
-    
+
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(serializedFile))) {
             List<Meeting> meetings = (List<Meeting>) ois.readObject();
-    
+
             if (meetings.isEmpty()) {
                 System.out.println("No meetings found.");
                 return;
             }
-    
+
             // Display the list of meetings
             System.out.println("\nAvailable meetings:");
             for (int i = 0; i < meetings.size(); i++) {
@@ -238,7 +224,7 @@ public class EmployeeMenuConsole {
                         LocalDateTime.ofEpochSecond(meeting.getEndTimeTimestamp(), 0, ZoneOffset.UTC)
                 );
             }
-    
+
             // Let the user select a meeting to modify
             System.out.print("\nEnter the number of the meeting you want to modify: ");
             int meetingIndex;
@@ -248,29 +234,29 @@ public class EmployeeMenuConsole {
                 System.out.println("Invalid input. Please enter a valid number.");
                 return;
             }
-    
+
             if (meetingIndex < 0 || meetingIndex >= meetings.size()) {
                 System.out.println("Invalid selection. Please try again.");
                 return;
             }
-    
+
             Meeting selectedMeeting = meetings.get(meetingIndex);
-    
+
             // Modify the meeting details
             System.out.println("\nModifying meeting: " + selectedMeeting.getTopic());
-    
+
             System.out.print("Enter new topic (leave blank to keep current: " + selectedMeeting.getTopic() + "): ");
             String newTopic = scanner.nextLine().trim();
             if (newTopic.isEmpty()) {
                 newTopic = selectedMeeting.getTopic();
             }
-    
+
             System.out.print("Enter new place (leave blank to keep current: " + selectedMeeting.getPlace() + "): ");
             String newPlace = scanner.nextLine().trim();
             if (newPlace.isEmpty()) {
                 newPlace = selectedMeeting.getPlace();
             }
-    
+
             LocalDateTime newStartDateTime = selectedMeeting.getStartTimeTimestamp() != null
                     ? LocalDateTime.ofEpochSecond(selectedMeeting.getStartTimeTimestamp(), 0, ZoneOffset.UTC)
                     : null;
@@ -287,7 +273,7 @@ public class EmployeeMenuConsole {
                 }
                 System.out.println("Invalid date and time format. Please try again.");
             }
-    
+
             LocalDateTime newEndDateTime = selectedMeeting.getEndTimeTimestamp() != null
                     ? LocalDateTime.ofEpochSecond(selectedMeeting.getEndTimeTimestamp(), 0, ZoneOffset.UTC)
                     : null;
@@ -308,11 +294,11 @@ public class EmployeeMenuConsole {
                 }
                 System.out.println("Invalid date and time format. Please try again.");
             }
-    
+
             System.out.println("Current guests: " + String.join(", ", selectedMeeting.getGuestEmployees()));
             System.out.print("Enter new guest employees (comma-separated, leave blank to keep current): ");
             String newGuestsInput = scanner.nextLine().trim();
-            List<String> newGuestEmployees = new ArrayList<>();
+            Set<String> newGuestEmployees = new HashSet<>();
             if (!newGuestsInput.isEmpty()) {
                 String[] guests = newGuestsInput.split(",");
                 for (String guest : guests) {
@@ -321,7 +307,7 @@ public class EmployeeMenuConsole {
             } else {
                 newGuestEmployees = selectedMeeting.getGuestEmployees();
             }
-    
+
             // Create the updated meeting object
             Meeting updatedMeeting = new Meeting(
                     selectedMeeting.getId(),
@@ -332,19 +318,19 @@ public class EmployeeMenuConsole {
                     newEndDateTime != null ? newEndDateTime.toEpochSecond(ZoneOffset.UTC) : selectedMeeting.getEndTimeTimestamp(),
                     selectedMeeting.getOrganizerName()
             );
-    
+
             // Update the meeting in the list
             meetings.set(meetingIndex, updatedMeeting);
-    
+
             // Save the updated meetings list back to the serialized file
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(serializedFile))) {
                 oos.writeObject(meetings);
                 System.out.println("Meeting updated successfully!");
             }
-    
+
             // Send the updated meeting to the server
             controller.sendCreateMeetingRequest(updatedMeeting);
-    
+
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error modifying meeting: " + e.getMessage());
         }

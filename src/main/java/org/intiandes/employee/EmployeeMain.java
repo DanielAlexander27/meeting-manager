@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class EmployeeMain {
-    private static String HOST_NAME = "localhost";
-    //    private static String HOST_NAME = "central-server";
-//    public static String EMPLOYEE_USERNAME = System.getenv("EMPLOYEE_USERNAME");
-    public static String EMPLOYEE_USERNAME = "alice-white";
+//    private static String HOST_NAME = "localhost";
+        private static String HOST_NAME = "central-server";
+    public static String EMPLOYEE_USERNAME = System.getenv("EMPLOYEE_USERNAME");
+//    public static String EMPLOYEE_USERNAME = "alice-white";
     public static String EMPLOYEE_NAME = System.getenv("EMPLOYEE_NAME");
 
     public static void main(String[] args) throws IOException {

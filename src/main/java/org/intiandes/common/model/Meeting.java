@@ -6,26 +6,26 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Set;
 
 public class Meeting implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final int id;
     private final String topic;
-    private final List<String> guestEmployees;
+    private final Set<String> guestEmployees;
     private final String place;
     private final Long startTimeTimestamp;
     private final Long endTimeTimestamp;
     private final String organizerName;
 
-    public Meeting(String topic, List<String> guestEmployees, String place, Long startTimeTimestamp, Long endTimeTimestamp, String organizerName) {
+    public Meeting(String topic, Set<String> guestEmployees, String place, Long startTimeTimestamp, Long endTimeTimestamp, String organizerName) {
         this(0, topic, guestEmployees, place, startTimeTimestamp, endTimeTimestamp, organizerName);
     }
 
-    public Meeting(int id, String topic, List<String> guestEmployees, String place, Long startTimeTimestamp, Long endTimeTimestamp, String organizerName) {
+    public Meeting(int id, String topic, Set<String> guestEmployees, String place, Long startTimeTimestamp, Long endTimeTimestamp, String organizerName) {
         this.id = id;
         this.topic = topic;
-        guestEmployees.add(organizerName);
         this.guestEmployees = guestEmployees;
         this.place = place;
         this.startTimeTimestamp = startTimeTimestamp;
@@ -45,7 +45,7 @@ public class Meeting implements Serializable {
         return topic;
     }
 
-    public List<String> getGuestEmployees() {
+    public Set<String> getGuestEmployees() {
         return guestEmployees;
     }
 

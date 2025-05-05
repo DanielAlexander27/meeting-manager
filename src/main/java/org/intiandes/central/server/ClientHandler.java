@@ -45,7 +45,6 @@ public class ClientHandler implements Runnable {
 
                 switch (receivedObject) {
                     case CreateMeetingRequest createMeetingRequest:
-                        System.out.println("Received request to create a meeting");
                         meetingMediator.scheduleMeeting(createMeetingRequest.meeting);
                         break;
                     case GetMeetingsRequest getMeetingsRequest:
