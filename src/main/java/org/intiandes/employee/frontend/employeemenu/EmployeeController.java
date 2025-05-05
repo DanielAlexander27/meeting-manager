@@ -4,6 +4,7 @@ import org.intiandes.common.model.Meeting;
 import org.intiandes.common.request.CreateMeetingRequest;
 import org.intiandes.common.request.GetEmployeesRequest;
 import org.intiandes.common.request.GetMeetingsRequest;
+import org.intiandes.common.request.UpdateMeetingRequest;
 import org.intiandes.common.response.GetEmployeesResponse;
 import org.intiandes.common.response.SendMeetingsResponse;
 import org.intiandes.employee.EmployeeMain;
@@ -40,6 +41,10 @@ public class EmployeeController {
 
     public void sendCreateMeetingRequest(Meeting newMeeting) {
         employeeServer.sendRequest(new CreateMeetingRequest(newMeeting));
+    }
+
+    public void sendUpdateMeetingRequest(Meeting meetingToUpdate) {
+        employeeServer.sendRequest(new UpdateMeetingRequest(meetingToUpdate));
     }
 
     public List<Meeting> getMyMeetings() {
