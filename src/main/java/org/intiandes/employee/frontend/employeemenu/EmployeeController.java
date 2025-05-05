@@ -4,6 +4,8 @@ import org.intiandes.common.model.Meeting;
 import org.intiandes.common.request.CreateMeetingRequest;
 import org.intiandes.common.request.GetEmployeesRequest;
 import org.intiandes.common.request.GetMeetingsRequest;
+import org.intiandes.common.response.GetEmployeesResponse;
+import org.intiandes.common.response.SendMeetingsResponse;
 import org.intiandes.employee.EmployeeMain;
 import org.intiandes.employee.server.EmployeeServer;
 
@@ -29,37 +31,24 @@ public class EmployeeController {
     public List<String> sendEmployeeRequest() {
         final Object response = employeeServer.sendRequest(new GetEmployeesRequest());
 
-        final List<String> employeeNames = new ArrayList<>();
-
-        if (response instanceof List<?> employeeNamesResponse) {
-            for (Object employeeName : employeeNamesResponse) {
-                if (employeeName instanceof String employeeNameString) {
-                    employeeNames.add(employeeNameString);
-                }
-            }
+        if (response instanceof GetEmployeesResponse employeesResponse) {
+            return employeesResponse.employeeNames;
         }
 
-        return employeeNames;
+        return List.of();
     }
 
     public void sendCreateMeetingRequest(Meeting newMeeting) {
         employeeServer.sendRequest(new CreateMeetingRequest(newMeeting));
     }
 
-    public void viewMyMeetings() {
+    public List<Meeting> getMyMeetings() {
         final Object response = employeeServer.sendRequest(new GetMeetingsRequest(EmployeeMain.EMPLOYEE_USERNAME));
 
-        final List<String> employeeNames = new ArrayList<>();
-
-        if (response instanceof List<?> employeeNamesResponse) {
-            for (Object employeeName : employeeNamesResponse) {
-                if (employeeName instanceof String employeeNameString) {
-                    employeeNames.add(employeeNameString);
-                }
-            }
+        if (response instanceof SendMeetingsResponse meetingsResponse) {
+            return meetingsResponse.meetings;
         }
 
-
+        return List.of();
     }
-
 }

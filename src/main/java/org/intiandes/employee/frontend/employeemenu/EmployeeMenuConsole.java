@@ -1,14 +1,11 @@
 package org.intiandes.employee.frontend.employeemenu;
 
 import org.intiandes.common.model.Meeting;
-import org.intiandes.common.request.CreateMeetingRequest;
 import org.intiandes.employee.EmployeeMain;
 
 import java.io.*;
-import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -32,7 +29,7 @@ public class EmployeeMenuConsole {
         System.out.println("             MEETING MANAGEMENT SYSTEM - EMPLOYEE             ");
         System.out.println("          ==========================================          ");
         System.out.println(
-                String.format("\nWelcome %s (username: %s)!", EmployeeMain.EMPLOYEE_NAME, EmployeeMain.EMPLOYEE_USERNAME)
+                String.format("Welcome %s (username: %s)!", EmployeeMain.EMPLOYEE_NAME, EmployeeMain.EMPLOYEE_USERNAME)
         );
     }
 
@@ -65,13 +62,14 @@ public class EmployeeMenuConsole {
 
             try {
                 choice = Integer.parseInt(scanner.nextLine().trim());
+                System.out.println();
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number between 1 and 6.");
                 continue;
             }
 
             switch (choice) {
-                case 1 -> viewMeetings();
+                case 1 -> viewMyMeetings();
                 case 2 -> createMeeting();
                 case 3 -> modifyMeeting();
                 case 4 -> syncMeetings();
@@ -101,48 +99,19 @@ public class EmployeeMenuConsole {
                 return;
             }
 
-            for (Meeting meeting : meetings) {
-                System.out.println("-------------------------------------------------");
-                System.out.println("Topic: " + meeting.getTopic());
-                System.out.println("Place: " + meeting.getPlace());
-                System.out.println("Start Time: " + LocalDateTime.ofEpochSecond(meeting.getStartTimeTimestamp(), 0, ZoneOffset.UTC));
-                System.out.println("End Time: " + LocalDateTime.ofEpochSecond(meeting.getEndTimeTimestamp(), 0, ZoneOffset.UTC));
-                System.out.println("Organizer: " + meeting.getOrganizerName());
-                System.out.println("Guests: " + String.join(", ", meeting.getGuestEmployees()));
-            }
-
+            Meeting.getMeetingsString(meetings);
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error retrieving meetings: " + e.getMessage());
         }
     }
 
-    private static void viewMeetings() {
-        String fileName = "meetings_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
-        File file = new File(fileName);
+    private void viewMyMeetings() {
+        List<Meeting> myMeetings = controller.getMyMeetings();
 
-        System.out.println("\nScheduled meetings for " + EmployeeMain.EMPLOYEE_NAME + ":");
-
-        if (!file.exists()) {
-            System.out.println("No meetings found.");
-            return;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            int count = 0;
-
-            while ((line = reader.readLine()) != null) {
-                System.out.println("-------------------------------------------------");
-                System.out.println(line);
-                count++;
-            }
-
-            if (count == 0) {
-                System.out.println("🔍 No meetings found.");
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error reading the meetings file: " + e.getMessage());
+        if (myMeetings.isEmpty()) {
+            System.out.println("There are no meetings associated with you!");
+        } else {
+            System.out.println(Meeting.getMeetingsString(myMeetings));
         }
     }
 
@@ -193,12 +162,14 @@ public class EmployeeMenuConsole {
             System.err.println("Valid example: 2025-05-04 10:30:00");
         }
 
-        System.out.println("Now, you will see the list of all the employees you can invite to the meeting");
+        System.out.println("\nNow, you will see the list of all the employees you can invite to the meeting: ");
         List<String> employeeNames = controller.getEmployeeNames();
 
         for (String employeeName : employeeNames) {
             System.out.println("\t -" + employeeName);
         }
+
+        System.out.println();
 
         List<String> guestEmployees = new ArrayList<>();
         System.out.print("Enter guest employees (comma-separated and with the same values you saw above): ");
@@ -212,6 +183,8 @@ public class EmployeeMenuConsole {
                 }
             }
         }
+
+        System.out.println("\nCreating meeting...\n");
 
         Meeting meeting = new Meeting(
                 topic,

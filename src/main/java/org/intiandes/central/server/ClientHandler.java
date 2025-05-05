@@ -29,9 +29,10 @@ public class ClientHandler implements Runnable {
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
             this.meetingMediator = meetingMediator;
 
-            String hostName = socket.getInetAddress().getHostName().split("\\.")[0];
-            clientHandlers.put(hostName, this);
-        } catch (IOException e) {
+            String username = (String) this.objectInputStream.readObject();
+            System.out.println("SERVER: The employee with username " + username + " has connected to the server!");
+            clientHandlers.put(username, this);
+        } catch (IOException | ClassNotFoundException e) {
             closeEverything();
         }
     }
@@ -48,7 +49,7 @@ public class ClientHandler implements Runnable {
                         meetingMediator.scheduleMeeting(createMeetingRequest.meeting);
                         break;
                     case GetMeetingsRequest getMeetingsRequest:
-                        meetingMediator.sendMeetingsAssociatedToEmployee(getMeetingsRequest.getEmployeeName());
+                        meetingMediator.sendMeetingsAssociatedToEmployee(this, getMeetingsRequest.getEmployeeName());
                         break;
                     case UpdateMeetingRequest updateMeetingRequest:
                         meetingMediator.updateMeeting(updateMeetingRequest.meeting);
