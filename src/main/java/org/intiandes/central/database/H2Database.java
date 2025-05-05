@@ -20,5 +20,6 @@ public class H2Database {
         DATA_SOURCE.setJdbcUrl(String.format("jdbc:h2:%s;INIT=RUNSCRIPT FROM '%s'", DB_DIRECTORY, initialDataPath));
 
         dbInitialized = true;
+
     }
 }
