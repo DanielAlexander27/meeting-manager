@@ -37,10 +37,15 @@ public class MeetingMediator {
         meetingSubjectPool.put(meeting.getId(), meetingSubject);
     }
 
-    public void updateMeeting(Meeting meeting) {
-        meetingRepository.updateMeeting(meeting);
-        final MeetingSubject meetingSubject = meetingSubjectPool.get(meeting.getId());
-        final String message = String.format("\nSERVER NOTIFICATION: The meeting with the topic %s has been updated.\n", meeting.getTopic());
+    public void updateMeeting(Meeting meetingToUpdate) {
+        final Meeting meeting = meetingRepository.updateMeeting(meetingToUpdate);
+        final MeetingSubject meetingSubject = meetingSubjectPool.get(meetingToUpdate.getId());
+
+        meeting.getGuestEmployees().forEach(employeeName ->
+                meetingSubject.registerObserver(ClientHandler.clientHandlers.get(employeeName))
+        );
+
+        final String message = String.format("\nSERVER NOTIFICATION: The meeting with the topic '%s' has been updated.\n", meetingToUpdate.getTopic());
         meetingSubject.notifyObservers(message);
     }
 

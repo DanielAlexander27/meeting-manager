@@ -23,6 +23,10 @@ public class Meeting implements Serializable {
         this(0, topic, guestEmployees, place, startTimeTimestamp, endTimeTimestamp, organizerName);
     }
 
+    public Meeting(String topic, Set<String> guestEmployees, String place, LocalDateTime startDateTime, LocalDateTime endDateTime, String organizerName) {
+        this(0, topic, guestEmployees, place, startDateTime, endDateTime, organizerName);
+    }
+
     public Meeting(int id, String topic, Set<String> guestEmployees, String place, Long startTimeTimestamp, Long endTimeTimestamp, String organizerName) {
         this.id = id;
         this.topic = topic;
@@ -31,6 +35,10 @@ public class Meeting implements Serializable {
         this.startTimeTimestamp = startTimeTimestamp;
         this.endTimeTimestamp = endTimeTimestamp;
         this.organizerName = organizerName;
+    }
+
+    public Meeting(int id, String topic, Set<String> guestEmployees, String place, LocalDateTime startDateTime, LocalDateTime endDateTime, String organizerName) {
+        this(id, topic, guestEmployees, place, toEpochSecond(startDateTime), toEpochSecond(endDateTime), organizerName);
     }
 
     public Meeting(int id, Meeting other) {
@@ -100,5 +108,9 @@ public class Meeting implements Serializable {
         }
 
         return sb.toString();
+    }
+
+    private static Long toEpochSecond(LocalDateTime dateTime) {
+        return dateTime.atZone(ZoneId.systemDefault()).toEpochSecond();
     }
 }

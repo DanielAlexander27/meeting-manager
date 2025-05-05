@@ -2,11 +2,11 @@ package org.intiandes.central.observer;
 
 import org.intiandes.central.server.ClientHandler;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MeetingSubject {
-    private List<ClientHandler> observers = new ArrayList<>();
+    private Set<ClientHandler> observers = new HashSet<>();
 
     public void registerObserver(ClientHandler clientHandler) {
         observers.add(clientHandler);

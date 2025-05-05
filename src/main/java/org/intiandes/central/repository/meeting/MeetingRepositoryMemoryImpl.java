@@ -17,12 +17,7 @@ public class MeetingRepositoryMemoryImpl implements MeetingRepository {
         loadMeetingsFromFile();
 
         try {
-            File storageFile = getStorageFile();
-            FileOutputStream fileOutputStream = new FileOutputStream(getStorageFile(), true);
-
-            this.objectOutputStream = storageFile.length() == 0
-                    ? new ObjectOutputStream(fileOutputStream)
-                    : new CustomObjectOutputStream(fileOutputStream);
+            setObjectOutputStream();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -63,10 +58,8 @@ public class MeetingRepositoryMemoryImpl implements MeetingRepository {
 
     private void saveMeeting(Meeting meeting) {
         try {
-            System.out.println("Meeting attemp");
             objectOutputStream.writeObject(meeting);
             objectOutputStream.flush();
-            System.out.println("Meeting saved!");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -78,6 +71,7 @@ public class MeetingRepositoryMemoryImpl implements MeetingRepository {
      */
     private void saveAllMeetings() {
         try (FileOutputStream ignored = new FileOutputStream(getStorageFile(), false)) {
+            setObjectOutputStream();
             for (Meeting meeting : meetingsTable.values()) {
                 objectOutputStream.writeObject(meeting);
             }
@@ -134,14 +128,22 @@ public class MeetingRepositoryMemoryImpl implements MeetingRepository {
         }
     }
 
+    private void setObjectOutputStream() throws IOException {
+        File storageFile = getStorageFile();
+
+        FileOutputStream fileOutputStream = new FileOutputStream(getStorageFile(), true);
+        this.objectOutputStream = storageFile.length() == 0
+                ? new ObjectOutputStream(fileOutputStream)
+                : new CustomObjectOutputStream(fileOutputStream);
+    }
+
     private static class CustomObjectOutputStream extends ObjectOutputStream {
         public CustomObjectOutputStream(OutputStream out) throws IOException {
             super(out);
         }
 
         @Override
-        protected void writeStreamHeader() throws IOException {
-            return;
+        protected void writeStreamHeader() {
         }
     }
 }
