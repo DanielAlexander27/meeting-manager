@@ -53,16 +53,14 @@ public class MeetingMediator {
 
         if (employeeNamesEnv == null) return List.of();
 
+        System.out.println(Arrays.stream(employeeNamesEnv.split(",")).toList());
         return Arrays.stream(employeeNamesEnv.split(",")).toList();
     }
 
-    public void sendMeetingsAssociatedToEmployee(String employeeName) {
-        sendMeetingsAssociatedToEmployee(employeeName, employeeName);
-    }
-
-    public void sendMeetingsAssociatedToEmployee(String employeeNameInterested, String employeeNameToSearch) {
+    public void sendMeetingsAssociatedToEmployee(ClientHandler requester, String employeeNameToSearch) {
         final List<Meeting> meetings = getMeetings(employeeNameToSearch);
-        ClientHandler.clientHandlers.get(employeeNameInterested).sendMessage(new SendMeetingsResponse(meetings));
+
+        requester.sendMessage(new SendMeetingsResponse(meetings));
     }
 
     public List<Meeting> getMeetings(String employeeName) {

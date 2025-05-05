@@ -92,15 +92,12 @@ public class MeetingRepositoryMemoryImpl implements MeetingRepository {
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(getStorageFile()))) {
             while (true) {
-                System.out.println("hola");
                 final Object object = ois.readObject();
 
                 if (object instanceof Meeting meeting) {
                     meetingsTable.put(meeting.getId(), meeting);
                     currentId++;
                 }
-
-                System.out.println("hola1");
             }
 
         } catch (EOFException e) {
