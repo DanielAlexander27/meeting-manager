@@ -25,6 +25,9 @@ services:
       - EMPLOYEE_NAME=Alice White
     depends_on:
       - central-server
+    volumes:
+      - ./server-output:/app/server-output
+
 
   bob-smith:
     build:
@@ -38,6 +41,9 @@ services:
       - EMPLOYEE_NAME=Bob Smith
     depends_on:
       - central-server
+    volumes:
+      - ./server-output:/app/server-output
+
 
   carol-simpson:
     build:
@@ -51,6 +57,9 @@ services:
       - EMPLOYEE_NAME=Carol Simpson
     depends_on:
       - central-server
+    volumes:
+      - ./server-output:/app/server-output
+
 
   david-black:
     build:
@@ -64,6 +73,9 @@ services:
       - EMPLOYEE_NAME=David Black
     depends_on:
       - central-server
+    volumes:
+      - ./server-output:/app/server-output
+
 
   eva-brown:
     build:
@@ -77,3 +89,5 @@ services:
       - EMPLOYEE_NAME=Eva Brown
     depends_on:
       - central-server
+    volumes:
+      - ./server-output:/app/server-output

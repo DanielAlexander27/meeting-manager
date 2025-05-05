@@ -66,39 +66,134 @@ public class EmployeeMenuConsole {
         }
     }
 
+    private static void writeMeetingsToFile(List<Meeting> meetings, String fileName) {
+        if (meetings == null || meetings.isEmpty()) {
+            System.out.println("No meetings to write to the file.");
+            return;
+        }
+
+        File file = new File(fileName);
+        File parentDir = file.getParentFile();
+
+        if (!parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+
+        // Usar CustomObjectOutputStream para archivos existentes
+        try {
+            ObjectOutputStream oos;
+            if (file.exists() && file.length() > 0) {
+                oos = new CustomObjectOutputStream(new FileOutputStream(file, true));
+            } else {
+                oos = new ObjectOutputStream(new FileOutputStream(file));
+            }
+
+            try (oos) {
+                for (Meeting meeting : meetings) {
+                    oos.writeObject(meeting);
+                }
+                oos.flush();
+                System.out.println("Meetings have been serialized and written to " + fileName);
+            }
+        } catch (IOException e) {
+            System.err.println("Error writing meetings to file: " + e.getMessage());
+        }
+    }
+
+    // Clase CustomObjectOutputStream necesaria para agregar al archivo existente
+    private static class CustomObjectOutputStream extends ObjectOutputStream {
+        public CustomObjectOutputStream(OutputStream out) throws IOException {
+            super(out);
+        }
+
+        @Override
+        protected void writeStreamHeader() throws IOException {
+            // No escribir el encabezado para evitar InvalidClassException
+        }
+    }
+
     private static void retrieveMeetings() {
-        String serializedFileName = "meetings_serialized_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
-        String readableFileName = "meetings_readable_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
-        File serializedFile = new File(serializedFileName);
+        // Definir las posibles rutas donde podría estar el archivo
+        String[] possiblePaths = {
+                "server-output/meetings.txt",
+                "/app/server-output/meetings.txt",
+                "../server-output/meetings.txt"
+        };
 
-        System.out.println("\nRetrieving past meetings from local store for " + EmployeeMain.EMPLOYEE_NAME + ":");
+        File serializedFile = null;
+        for (String path : possiblePaths) {
+            File file = new File(path);
+            if (file.exists()) {
+                serializedFile = file;
+                break;
+            }
+        }
 
-        if (!serializedFile.exists()) {
-            System.out.println("No serialized meetings found.");
+        System.out.println("\nRetrieving meetings from storage:");
+
+        if (serializedFile == null || !serializedFile.exists()) {
+            System.out.println("No meetings file found. Checked paths:");
+            for (String path : possiblePaths) {
+                System.out.println(" - " + new File(path).getAbsolutePath());
+            }
             return;
         }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(serializedFile))) {
-            List<Meeting> meetings = (List<Meeting>) ois.readObject();
+            List<Meeting> meetings = new ArrayList<>();
+
+            while (true) {
+                try {
+                    Object obj = ois.readObject();
+                    if (obj instanceof Meeting meeting) {
+                        // Solo mostrar reuniones relacionadas con el empleado actual
+                        if (meeting.getGuestEmployees().contains(EmployeeMain.EMPLOYEE_USERNAME) ||
+                                meeting.getOrganizerName().equals(EmployeeMain.EMPLOYEE_USERNAME)) {
+                            meetings.add(meeting);
+                        }
+                    }
+                } catch (EOFException e) {
+                    break; // Fin del archivo
+                }
+            }
 
             if (meetings.isEmpty()) {
-                System.out.println("No meetings found.");
+                System.out.println("No meetings found for " + EmployeeMain.EMPLOYEE_NAME);
                 return;
             }
-            Meeting.getMeetingsString(meetings);
+
+            // Ordenar las reuniones por fecha de inicio
+            meetings.sort((m1, m2) -> m1.getStartTimeTimestamp().compareTo(m2.getStartTimeTimestamp()));
+
+            // Mostrar las reuniones usando el método toString de Meeting
+            System.out.println("\nYour meetings:");
+            System.out.println(Meeting.getMeetingsString(meetings));
+
+        } catch (StreamCorruptedException e) {
+            System.err.println("Error: El archivo de reuniones está corrupto o mal formado.");
+            e.printStackTrace();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error retrieving meetings: " + e.getMessage());
+            System.err.println("Error reading meetings: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private void viewMyMeetings() {
+        System.out.println("\nRetrieving your scheduled meetings from server...");
+
         List<Meeting> myMeetings = controller.getMyMeetings();
 
         if (myMeetings.isEmpty()) {
             System.out.println("There are no meetings associated with you!");
-        } else {
-            System.out.println(Meeting.getMeetingsString(myMeetings));
+            return;
         }
+
+        // Ordenar las reuniones por fecha de inicio
+        myMeetings.sort((m1, m2) -> m1.getStartTimeTimestamp().compareTo(m2.getStartTimeTimestamp()));
+
+        // Mostrar las reuniones
+        System.out.println("\nYour scheduled meetings:");
+        System.out.println(Meeting.getMeetingsString(myMeetings));
     }
 
     public void createMeeting() {
