@@ -57,4 +57,8 @@ public class Meeting implements Serializable {
     public Long getEndTimeTimestamp() {
         return endTimeTimestamp;
     }
+
+    public String getOrganizerName() {
+        return organizerName;
+    }
 }
