@@ -292,16 +292,14 @@ public class EmployeeMenuConsole {
 
         System.out.print("Enter new guest employees (comma-separated, leave blank to keep current): ");
         String newGuestsInput = scanner.nextLine().trim();
-        Set<String> newGuestEmployees = new HashSet<>();
+        Set<String> newGuestEmployees = selectedMeeting.getGuestEmployees();
+
         if (!newGuestsInput.isEmpty()) {
             String[] guests = newGuestsInput.split(",");
             for (String guest : guests) {
                 newGuestEmployees.add(guest.trim());
             }
-        } else {
-            newGuestEmployees = selectedMeeting.getGuestEmployees();
         }
-
         // Create the updated meeting object
         Meeting updatedMeeting = new Meeting(
                 selectedMeeting.getId(),
@@ -343,5 +341,6 @@ public class EmployeeMenuConsole {
     private static void exitSystem() {
         System.out.println("\nLogging out...");
         System.out.println("Goodbye, " + EmployeeMain.EMPLOYEE_NAME + "!");
+        System.exit(0);
     }
 }
