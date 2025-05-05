@@ -1,15 +1,12 @@
 package org.intiandes.employee;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import org.intiandes.common.model.Meeting;
+import org.intiandes.common.request.CreateMeetingRequest;
+
+import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -20,6 +17,8 @@ public class EmployeeMenu {
 
     private static String employeeName;
     private static final Scanner scanner = new Scanner(System.in);
+    private static final String SERVER_HOST = "localhost";
+    private static final int SERVER_PORT = 9091;
 
     public static void main(String[] args) {
         showWelcome();
@@ -29,40 +28,41 @@ public class EmployeeMenu {
 
     private static void showWelcome() {
         System.out.println("          ==========================================          ");
-        System.out.println("          SISTEMA DE GESTION DE REUNIONES - EMPLEADO          ");
+        System.out.println("          MEETING MANAGEMENT SYSTEM - EMPLOYEE               ");
         System.out.println("          ==========================================          \n");
     }
 
     private static void login() {
-        System.out.print("Ingrese su nombre de usuario (Ej: Alice_White): ");
+        System.out.print("Enter your username (e.g., Alice_White): ");
         employeeName = scanner.nextLine().trim();
 
         if (employeeName.isEmpty()) {
-            System.out.println("Nombre de usuario no valido. Intente nuevamente.");
+            System.out.println("Invalid username. Please try again.");
             login();
         } else {
-            System.out.println("Sesion iniciada como: " + employeeName + "\n");
+            System.out.println("Logged in as: " + employeeName + "\n");
         }
     }
 
     private static void showMenu() {
         int choice = -1;
 
-        while (choice != 6) {
-            System.out.println("\n===== MENU PRINCIPAL =====");
-            System.out.println("Empleado: " + employeeName);
-            System.out.println("1. Ver reuniones programadas");
-            System.out.println("2. Crear nueva reunion");
-            System.out.println("3. Modificar una reunion");
-            System.out.println("4. Cancelar una reunion");
-            System.out.println("5. Sincronizar reuniones con el servidor");
-            System.out.println("6. Salir");
-            System.out.print("Seleccione una opcion: ");
+        while (choice != 7) {
+            System.out.println("\n===== MAIN MENU =====");
+            System.out.println("Employee: " + employeeName);
+            System.out.println("1. View scheduled meetings");
+            System.out.println("2. Create a new meeting");
+            System.out.println("3. Modify a meeting");
+            System.out.println("4. Cancel a meeting");
+            System.out.println("5. Sync meetings with the server");
+            System.out.println("6. Retrieve past meetings");
+            System.out.println("7. Exit");
+            System.out.print("Select an option: ");
 
             try {
                 choice = Integer.parseInt(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.println("Entrada no valida. Intente con un número entre 1 y 6.");
+                System.out.println("Invalid input. Please enter a number between 1 and 7.");
                 continue;
             }
 
@@ -72,20 +72,55 @@ public class EmployeeMenu {
                 case 3 -> modifyMeeting();
                 case 4 -> cancelMeeting();
                 case 5 -> syncMeetings();
-                case 6 -> exitSystem();
-                default -> System.out.println("Opcinn invalida. Intente nuevamente.");
+                case 6 -> retrieveMeetings();
+                case 7 -> exitSystem();
+                default -> System.out.println("Invalid option. Please try again.");
             }
         }
     }
 
-    private static void viewMeetings() {
-        String fileName = "reuniones_" + employeeName + ".txt";
+    private static void retrieveMeetings() {
+        String fileName = "meetings_serialized_" + employeeName + ".txt";
         File file = new File(fileName);
 
-        System.out.println("\nReuniones programadas para " + employeeName + ":");
+        System.out.println("\nRetrieving past meetings for " + employeeName + ":");
 
         if (!file.exists()) {
-            System.out.println("No hay reuniones registradas.");
+            System.out.println("No serialized meetings found.");
+            return;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            List<Meeting> meetings = (List<Meeting>) ois.readObject();
+
+            if (meetings.isEmpty()) {
+                System.out.println("No meetings found.");
+                return;
+            }
+
+            for (Meeting meeting : meetings) {
+                System.out.println("-------------------------------------------------");
+                System.out.println("Topic: " + meeting.getTopic());
+                System.out.println("Place: " + meeting.getPlace());
+                System.out.println("Start Time: " + LocalDateTime.ofEpochSecond(meeting.getStartTimeTimestamp(), 0, ZoneOffset.UTC));
+                System.out.println("End Time: " + LocalDateTime.ofEpochSecond(meeting.getEndTimeTimestamp(), 0, ZoneOffset.UTC));
+                System.out.println("Organizer: " + meeting.getOrganizerName());
+                System.out.println("Guests: " + String.join(", ", meeting.getGuestEmployees()));
+            }
+
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error retrieving meetings: " + e.getMessage());
+        }
+    }
+
+    private static void viewMeetings() {
+        String fileName = "meetings_" + employeeName + ".txt";
+        File file = new File(fileName);
+
+        System.out.println("\nScheduled meetings for " + employeeName + ":");
+
+        if (!file.exists()) {
+            System.out.println("No meetings found.");
             return;
         }
 
@@ -100,31 +135,30 @@ public class EmployeeMenu {
             }
 
             if (count == 0) {
-                System.out.println("🔍 No hay reuniones registradas.");
+                System.out.println("🔍 No meetings found.");
             }
 
         } catch (IOException e) {
-            System.err.println("Error al leer el archivo de reuniones: " + e.getMessage());
+            System.err.println("Error reading the meetings file: " + e.getMessage());
         }
     }
 
-
     private static void createMeeting() {
-        System.out.println("=== Crear Reunion ===");
+        System.out.println("=== Create Meeting ===");
 
-        System.out.print("Título de la reunion: ");
-        String title = scanner.nextLine();
+        System.out.print("Meeting topic: ");
+        String topic = scanner.nextLine();
 
-        System.out.print("Descripción de la reunion: ");
+        System.out.print("Meeting description: ");
         String description = scanner.nextLine();
 
-        System.out.print("Lugar de la reunion: ");
-        String location = scanner.nextLine();
+        System.out.print("Meeting place: ");
+        String place = scanner.nextLine();
 
-        System.out.print("Fecha y hora de inicio (yyyy-MM-dd HH:mm:ss): ");
+        System.out.print("Start date and time (yyyy-MM-dd HH:mm:ss): ");
         String startInput = scanner.nextLine();
 
-        System.out.print("Fecha y hora de fin (yyyy-MM-dd HH:mm:ss): ");
+        System.out.print("End date and time (yyyy-MM-dd HH:mm:ss): ");
         String endInput = scanner.nextLine();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -136,247 +170,71 @@ public class EmployeeMenu {
             endDateTime = LocalDateTime.parse(endInput, formatter);
 
             if (!endDateTime.isAfter(startDateTime)) {
-                System.err.println("\nError: La fecha y hora de fin debe ser posterior a la de inicio.");
-                System.err.println("Inicio ingresado: " + startDateTime);
-                System.err.println("Fin ingresado:    " + endDateTime);
+                System.err.println("\nError: The end date and time must be after the start date and time.");
                 return;
             }
-            
 
-            // En esta etapa podrías construir un objeto Meeting y enviarlo al servidor.
-            System.out.println("\n✅ Reunion creada correctamente:");
-            System.out.println("Titulo: " + title);
-            System.out.println("Descripcion: " + description);
-            System.out.println("Lugar: " + location);
-            System.out.println("Inicio: " + startDateTime);
-            System.out.println("Fin: " + endDateTime);
+            List<String> guestEmployees = new ArrayList<>();
+            System.out.print("Enter guest employees (comma-separated): ");
+            String guestsInput = scanner.nextLine();
+            if (!guestsInput.isEmpty()) {
+                String[] guests = guestsInput.split(",");
+                for (String guest : guests) {
+                    guestEmployees.add(guest.trim());
+                }
+            }
 
-            // Aquí podrías llamar a una función para enviar esta información al servidor.
+            Meeting meeting = new Meeting(topic, guestEmployees, place, startDateTime.toEpochSecond(ZoneOffset.UTC), endDateTime.toEpochSecond(ZoneOffset.UTC), employeeName);
+
+            try (Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
+                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+
+                CreateMeetingRequest request = new CreateMeetingRequest(meeting, new ArrayList<>());
+                out.writeObject(request);
+                System.out.println("\nMeeting created successfully!");
+
+            } catch (IOException e) {
+                System.err.println("Error connecting to the server: " + e.getMessage());
+            }
 
         } catch (DateTimeParseException e) {
-            System.err.println("\nError: El formato de fecha y hora es inválido.");
-            System.err.println("Ejemplo válido: 2025-05-04 10:30:00");
+            System.err.println("\nError: Invalid date and time format.");
+            System.err.println("Valid example: 2025-05-04 10:30:00");
         }
     }
-
 
     private static void modifyMeeting() {
-        String fileName = "reuniones_" + employeeName + ".txt";
-        File file = new File(fileName);
-
-        if (!file.exists()) {
-            System.out.println("\nNo hay reuniones que modificar.");
-            return;
-        }
-
-        List<List<String>> meetings = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            List<String> currentMeeting = new ArrayList<>();
-
-            while ((line = reader.readLine()) != null) {
-                if (line.equals("-------------------------------------------------")) {
-                    meetings.add(new ArrayList<>(currentMeeting));
-                    currentMeeting.clear();
-                } else {
-                    currentMeeting.add(line);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error al leer las reuniones: " + e.getMessage());
-            return;
-        }
-
-        if (meetings.isEmpty()) {
-            System.out.println("\nNo hay reuniones que modificar.");
-            return;
-        }
-
-        // Mostrar reuniones
-        System.out.println("\n📋 Reuniones disponibles:");
-        for (int i = 0; i < meetings.size(); i++) {
-            System.out.println("\n[#"+(i+1)+"]");
-            for (String line : meetings.get(i)) {
-                System.out.println(line);
-            }
-        }
-
-        System.out.print("\nIngrese el número de la reunión que desea modificar: ");
-        int index;
-        try {
-            index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= meetings.size()) {
-                System.out.println("Índice inválido.");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Entrada no válida.");
-            return;
-        }
-
-        List<String> selected = meetings.get(index);
-        System.out.println("\nEditando reunión seleccionada...");
-
-        // Extraer campos actuales
-        String[] newData = new String[5];
-        String[] fieldLabels = {"Título", "Descripción", "Lugar", "Inicio (yyyy-MM-dd HH:mm:ss)", "Fin (yyyy-MM-dd HH:mm:ss)"};
-
-        for (int i = 0; i < 5; i++) {
-            String currentLine = selected.get(i);
-            String oldValue = currentLine.substring(currentLine.indexOf(":") + 2);
-            System.out.print(fieldLabels[i] + " [" + oldValue + "]: ");
-            String input = scanner.nextLine().trim();
-            newData[i] = input.isEmpty() ? oldValue : input;
-        }
-
-        // Validar fechas
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        try {
-            LocalDateTime start = LocalDateTime.parse(newData[3], formatter);
-            LocalDateTime end = LocalDateTime.parse(newData[4], formatter);
-
-            if (!end.isAfter(start)) {
-                System.err.println("La fecha de fin debe ser posterior a la de inicio.");
-                return;
-            }
-        } catch (DateTimeParseException e) {
-            System.err.println("Formato de fecha inválido.");
-            return;
-        }
-
-        // Guardar modificación
-        List<String> updatedMeeting = new ArrayList<>();
-        updatedMeeting.add("Título: " + newData[0]);
-        updatedMeeting.add("Descripción: " + newData[1]);
-        updatedMeeting.add("Lugar: " + newData[2]);
-        updatedMeeting.add("Inicio: " + newData[3]);
-        updatedMeeting.add("Fin: " + newData[4]);
-
-        meetings.set(index, updatedMeeting); // Reemplaza la reunión vieja
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (List<String> meeting : meetings) {
-                for (String line : meeting) {
-                    writer.write(line + "\n");
-                }
-                writer.write("-------------------------------------------------\n");
-            }
-            System.out.println("\nReunión modificada exitosamente.");
-        } catch (IOException e) {
-            System.err.println("Error al escribir en el archivo: " + e.getMessage());
-        }
+        System.out.println("Modify meeting functionality is not yet implemented.");
     }
-
 
     private static void cancelMeeting() {
-        String fileName = "reuniones_" + employeeName + ".txt";
-        File file = new File(fileName);
-
-        if (!file.exists()) {
-            System.out.println("\n📭 No hay reuniones que cancelar.");
-            return;
-        }
-
-        List<List<String>> meetings = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            List<String> currentMeeting = new ArrayList<>();
-
-            while ((line = reader.readLine()) != null) {
-                if (line.equals("-------------------------------------------------")) {
-                    meetings.add(new ArrayList<>(currentMeeting));
-                    currentMeeting.clear();
-                } else {
-                    currentMeeting.add(line);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error al leer las reuniones: " + e.getMessage());
-            return;
-        }
-
-        if (meetings.isEmpty()) {
-            System.out.println("\nNo hay reuniones que cancelar.");
-            return;
-        }
-
-        // Mostrar reuniones
-        System.out.println("\n📋 Reuniones disponibles para cancelar:");
-        for (int i = 0; i < meetings.size(); i++) {
-            System.out.println("\n[#"+(i+1)+"]");
-            for (String line : meetings.get(i)) {
-                System.out.println(line);
-            }
-        }
-
-        System.out.print("\nIngrese el número de la reunión que desea cancelar: ");
-        int index;
-        try {
-            index = Integer.parseInt(scanner.nextLine().trim()) - 1;
-            if (index < 0 || index >= meetings.size()) {
-                System.out.println("Índice inválido.");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Entrada no válida.");
-            return;
-        }
-
-        // Confirmación
-        System.out.print("¿Está seguro de que desea cancelar esta reunión? (s/n): ");
-        String confirm = scanner.nextLine().trim().toLowerCase();
-        if (!confirm.equals("s")) {
-            System.out.println("❎ Cancelación abortada.");
-            return;
-        }
-
-        meetings.remove(index); // Eliminar reunión seleccionada
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            for (List<String> meeting : meetings) {
-                for (String line : meeting) {
-                    writer.write(line + "\n");
-                }
-                writer.write("-------------------------------------------------\n");
-            }
-            System.out.println("\nReunión cancelada exitosamente.");
-        } catch (IOException e) {
-            System.err.println("Error al guardar los cambios: " + e.getMessage());
-        }
+        System.out.println("Cancel meeting functionality is not yet implemented.");
     }
 
-
     private static void syncMeetings() {
-        String serverHost = "localhost";
-        int serverPort = 9090;
+        String fileName = "meetings_" + employeeName + ".txt";
 
-        try (Socket socket = new Socket(serverHost, serverPort);
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try (Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
 
-        // Enviar solicitud de sincronización
-        out.println("SYNC " + employeeName);
+            out.println("SYNC " + employeeName);
 
-        String fileName = "reuniones_" + employeeName + ".txt";
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             String line;
             while ((line = in.readLine()) != null) {
                 writer.write(line + "\n");
                 if (line.equals("EOF")) break;
             }
-            System.out.println("Reuniones sincronizadas correctamente con el servidor.");
-        }
+            System.out.println("Meetings successfully synced with the server.");
 
         } catch (IOException e) {
-            System.err.println("Error al sincronizar con el servidor central: " + e.getMessage());
+            System.err.println("Error syncing with the central server: " + e.getMessage());
         }
     }
 
-
     private static void exitSystem() {
-        System.out.println("\n Cerrando sesion...");
-        System.out.println("¡Hasta luego! " + employeeName );
+        System.out.println("\nLogging out...");
+        System.out.println("Goodbye, " + employeeName + "!");
     }
 }
