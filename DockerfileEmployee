@@ -1,0 +1,5 @@
+FROM openjdk:21
+WORKDIR /app
+COPY ./target/meeting-manager-1.0-employee.jar .
+EXPOSE 8081
+CMD ["java", "-jar", "meeting-manager-1.0-employee.jar"]

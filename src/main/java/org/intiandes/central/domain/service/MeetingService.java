@@ -4,7 +4,6 @@ import org.intiandes.central.repository.employeemeeting.EmployeeMeetingRepositor
 import org.intiandes.central.repository.meeting.MeetingRepository;
 import org.intiandes.common.model.EmployeeMeeting;
 import org.intiandes.common.model.Meeting;
-import org.intiandes.common.request.CreateMeetingRequest;
 
 import java.util.List;
 
@@ -27,5 +26,9 @@ public class MeetingService {
 
     public Meeting updateMeeting(Meeting meeting) {
         return meetingRepository.updateMeeting(meeting);
+    }
+
+    public List<Meeting> getMeetings(String employeeName) {
+        return meetingRepository.getMeetingsByEmployeeName(employeeName);
     }
 }

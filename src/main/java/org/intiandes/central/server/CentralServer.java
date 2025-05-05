@@ -1,6 +1,7 @@
 package org.intiandes.central.server;
 
 import org.intiandes.central.domain.service.MeetingService;
+import org.intiandes.central.mediator.MeetingMediator;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -8,22 +9,31 @@ import java.net.Socket;
 
 public class CentralServer {
     private ServerSocket serverSocket;
-    private final MeetingService meetingService;
+    private final MeetingMediator meetingMediator;
 
-    public CentralServer(ServerSocket serverSocket, MeetingService meetingService) {
+    public CentralServer(ServerSocket serverSocket, MeetingMediator meetingService) {
         this.serverSocket = serverSocket;
-        this.meetingService = meetingService;
+        this.meetingMediator = meetingService;
     }
 
     public void startServer() {
         try {
             while (!serverSocket.isClosed()) {
                 Socket socket = serverSocket.accept();
-                new Thread(new ClientHandler(socket, meetingService)).start();
+                new Thread(new ClientHandler(socket, meetingMediator)).start();
             }
-
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            closeServer();
+        }
+    }
+
+    private void closeServer() {
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -33,7 +33,6 @@ public class Meeting implements Serializable {
         this(id, other.getTopic(), other.getGuestEmployees(), other.getPlace(), other.getStartTimeTimestamp(), other.getEndTimeTimestamp(), other.organizerName);
     }
 
-
     public int getId() {
         return id;
     }
@@ -56,5 +55,9 @@ public class Meeting implements Serializable {
 
     public Long getEndTimeTimestamp() {
         return endTimeTimestamp;
+    }
+
+    public String getOrganizerName() {
+        return organizerName;
     }
 }

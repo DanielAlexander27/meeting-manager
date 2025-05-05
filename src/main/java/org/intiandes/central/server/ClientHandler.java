@@ -1,7 +1,9 @@
 package org.intiandes.central.server;
 
-import org.intiandes.central.domain.service.MeetingService;
+import org.intiandes.central.mediator.MeetingMediator;
 import org.intiandes.common.request.CreateMeetingRequest;
+import org.intiandes.common.request.GetMeetingsRequest;
+import org.intiandes.common.request.UpdateMeetingRequest;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,21 +16,20 @@ public class ClientHandler implements Runnable {
     public static final Map<String, ClientHandler> clientHandlers = new HashMap<>();
 
     private final Socket socket;
+    private final MeetingMediator meetingMediator;
+
     private final ObjectOutputStream objectOutputStream;
     private final ObjectInputStream objectInputStream;
-    private final MeetingService meetingService;
 
-    public ClientHandler(Socket socket, MeetingService meetingService) {
+    public ClientHandler(Socket socket, MeetingMediator meetingMediator) {
         try {
             this.socket = socket;
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
-            this.meetingService = meetingService;
+            this.meetingMediator = meetingMediator;
 
             String hostName = socket.getInetAddress().getHostName().split("\\.")[0];
             clientHandlers.put(hostName, this);
-
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -40,9 +41,20 @@ public class ClientHandler implements Runnable {
             try {
                 Object receivedObject = this.objectInputStream.readObject();
 
-                if (receivedObject instanceof CreateMeetingRequest) {
-//                    this.meetingService.scheduleMeeting((CreateMeetingRequest) receivedObject);
+                switch (receivedObject) {
+                    case CreateMeetingRequest createMeetingRequest:
+                        System.out.println("Received request to create a meeting");
+                        meetingMediator.scheduleMeeting(createMeetingRequest.meeting);
+                        break;
+                    case GetMeetingsRequest getMeetingsRequest:
+                        meetingMediator.sendMeetingsAssociatedToEmployee(getMeetingsRequest.getEmployeeName());
+                        break;
+                    case UpdateMeetingRequest updateMeetingRequest:
+                        meetingMediator.updateMeeting(updateMeetingRequest.meeting);
+                    default:
+                        break;
                 }
+
             } catch (Exception e) {
                 closeEverything();
                 break;
