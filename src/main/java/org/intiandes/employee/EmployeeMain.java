@@ -1,30 +1,35 @@
 package org.intiandes.employee;
 
-import org.intiandes.common.model.Meeting;
-import org.intiandes.common.request.CreateMeetingRequest;
+import org.intiandes.employee.frontend.employeemenu.EmployeeController;
+import org.intiandes.employee.frontend.employeemenu.EmployeeMenuConsole;
+import org.intiandes.employee.server.EmployeeServer;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.util.List;
 
 public class EmployeeMain {
-        private static String hostName = "localhost";
-//    private static String hostName = "central-server";
+    private static String HOST_NAME = "localhost";
+    public static String EMPLOYEE_USERNAME = System.getenv("EMPLOYEE_USERNAME");
+    public static String EMPLOYEE_NAME = System.getenv("EMPLOYEE_NAME");
 
     public static void main(String[] args) throws IOException {
-        System.out.println(InetAddress.getLocalHost());
+        EmployeeMenuConsole.showWelcome();
 
-        Socket socket = new Socket(hostName, 9091);
+        Socket socket = new Socket(HOST_NAME, 9091);
+        final EmployeeServer employeeServer = new EmployeeServer(socket);
+        employeeServer.listenForStringMessages();
 
-        ObjectOutputStream ous = new ObjectOutputStream(socket.getOutputStream());
+        final EmployeeController controller = new EmployeeController(employeeServer);
+        final EmployeeMenuConsole consoleProgram = new EmployeeMenuConsole(controller);
 
-        ous.writeObject(
-                new CreateMeetingRequest(
-                        new Meeting("TOPIC", List.of("alice-white", "bob-smith"), "PLACE", System.currentTimeMillis(), System.currentTimeMillis(), "alice-white")
-                )
-        );
-        ous.flush();
+        consoleProgram.showMenu();
+//        ObjectOutputStream ous = new ObjectOutputStream(socket.getOutputStream());
+//
+//        ous.writeObject(
+//                new CreateMeetingRequest(
+//                        new Meeting("TOPIC", List.of("alice-white", "bob-smith"), "PLACE", System.currentTimeMillis(), System.currentTimeMillis(), "alice-white")
+//                )
+//        );
+//        ous.flush();
     }
 }

@@ -2,6 +2,7 @@ package org.intiandes.central.server;
 
 import org.intiandes.central.mediator.MeetingMediator;
 import org.intiandes.common.request.CreateMeetingRequest;
+import org.intiandes.common.request.GetEmployeesRequest;
 import org.intiandes.common.request.GetMeetingsRequest;
 import org.intiandes.common.request.UpdateMeetingRequest;
 
@@ -15,11 +16,11 @@ import java.util.Map;
 public class ClientHandler implements Runnable {
     public static final Map<String, ClientHandler> clientHandlers = new HashMap<>();
 
-    private final Socket socket;
-    private final MeetingMediator meetingMediator;
+    private Socket socket;
+    private MeetingMediator meetingMediator;
 
-    private final ObjectOutputStream objectOutputStream;
-    private final ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
+    private ObjectInputStream objectInputStream;
 
     public ClientHandler(Socket socket, MeetingMediator meetingMediator) {
         try {
@@ -31,7 +32,7 @@ public class ClientHandler implements Runnable {
             String hostName = socket.getInetAddress().getHostName().split("\\.")[0];
             clientHandlers.put(hostName, this);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            closeEverything();
         }
     }
 
@@ -51,6 +52,10 @@ public class ClientHandler implements Runnable {
                         break;
                     case UpdateMeetingRequest updateMeetingRequest:
                         meetingMediator.updateMeeting(updateMeetingRequest.meeting);
+                        break;
+                    case GetEmployeesRequest ignored:
+                        meetingMediator.sendEmployeeNames(this);
+                        break;
                     default:
                         break;
                 }

@@ -4,8 +4,10 @@ import org.intiandes.central.observer.MeetingSubject;
 import org.intiandes.central.repository.meeting.MeetingRepository;
 import org.intiandes.central.server.ClientHandler;
 import org.intiandes.common.model.Meeting;
+import org.intiandes.common.response.GetEmployeesResponse;
 import org.intiandes.common.response.SendMeetingsResponse;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ public class MeetingMediator {
             }
         }
 
+        meetingSubject.notifyObservers(String.format("SERVER: A new meeting with the topic %s has been scheduled.", meeting.getTopic()));
         meetingSubjectPool.put(meeting.getId(), meetingSubject);
     }
 
@@ -41,12 +44,16 @@ public class MeetingMediator {
         meetingSubject.notifyObservers(message);
     }
 
-    public String[] getEmployeeNames() {
+    public void sendEmployeeNames(ClientHandler clientHandler) {
+        clientHandler.sendMessage(new GetEmployeesResponse(getEmployeeNames()));
+    }
+
+    public List<String> getEmployeeNames() {
         String employeeNamesEnv = System.getenv("EMPLOYEE_NAMES");
 
-        if (employeeNamesEnv == null) return null;
+        if (employeeNamesEnv == null) return List.of();
 
-        return employeeNamesEnv.split(",");
+        return Arrays.stream(employeeNamesEnv.split(",")).toList();
     }
 
     public void sendMeetingsAssociatedToEmployee(String employeeName) {
