@@ -1,6 +1,5 @@
 package org.intiandes.central.server;
 
-import org.intiandes.central.domain.service.MeetingService;
 import org.intiandes.central.mediator.MeetingMediator;
 
 import java.io.IOException;
