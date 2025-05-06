@@ -1,10 +1,6 @@
-version: '3.8'
-
 services:
   central-server:
-    build:
-      context: .
-      dockerfile: DockerfileCentral
+    image: danandrade27/java-meeting:server
     container_name: central-server
     ports:
       - "9092:9091"
@@ -14,9 +10,7 @@ services:
       - ./server-output:/app/server-output
 
   alice-white:
-    build:
-      context: .
-      dockerfile: DockerfileEmployee
+    image: danandrade27/java-meeting:employee-client
     container_name: alice-white
     ports:
       - "8081:8081"
@@ -29,9 +23,7 @@ services:
       - ./server-output:/app/server-output
 
   bob-smith:
-    build:
-      context: .
-      dockerfile: DockerfileEmployee
+    image: danandrade27/java-meeting:employee-client
     container_name: bob-smith
     ports:
       - "8082:8081"
@@ -44,9 +36,7 @@ services:
       - ./server-output:/app/server-output
 
   carol-simpson:
-    build:
-      context: .
-      dockerfile: DockerfileEmployee
+    image: danandrade27/java-meeting:employee-client
     container_name: carol-simpson
     ports:
       - "8083:8081"
@@ -59,9 +49,7 @@ services:
       - ./server-output:/app/server-output
 
   david-black:
-    build:
-      context: .
-      dockerfile: DockerfileEmployee
+    image: danandrade27/java-meeting:employee-client
     container_name: david-black
     ports:
       - "8084:8081"
@@ -74,9 +62,7 @@ services:
       - ./server-output:/app/server-output
 
   eva-brown:
-    build:
-      context: .
-      dockerfile: DockerfileEmployee
+    image: danandrade27/java-meeting:employee-client
     container_name: eva-brown
     ports:
       - "8085:8081"
