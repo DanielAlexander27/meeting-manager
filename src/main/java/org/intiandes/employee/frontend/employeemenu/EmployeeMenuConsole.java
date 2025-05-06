@@ -1,12 +1,11 @@
 package org.intiandes.employee.frontend.employeemenu;
 
 import org.intiandes.common.model.Meeting;
+import org.intiandes.common.utils.FileUtils;
 import org.intiandes.employee.EmployeeMain;
 
 import java.io.*;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -42,7 +41,7 @@ public class EmployeeMenuConsole {
             System.out.println("2. Create a new meeting");
             System.out.println("3. Modify a meeting");
             System.out.println("4. Sync meetings with the server");
-            System.out.println("5. Retrieve past meetings");
+            System.out.println("5. Retrieve meetings from local storage.");
             System.out.println("6. Exit");
             System.out.print("Select an option: ");
 
@@ -59,45 +58,10 @@ public class EmployeeMenuConsole {
                 case 2 -> createMeeting();
                 case 3 -> modifyMeeting();
                 case 4 -> syncMeetings();
-                case 5 -> retrieveMeetings();
+                case 5 -> retrieveMeetingsFromLocalStorage();
                 case 6 -> exitSystem();
                 default -> System.out.println("Invalid option. Please try again.");
             }
-        }
-    }
-
-    private static void retrieveMeetings() {
-        String serializedFileName = "meetings_serialized_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
-        String readableFileName = "meetings_readable_" + EmployeeMain.EMPLOYEE_USERNAME + ".txt";
-        File serializedFile = new File(serializedFileName);
-
-        System.out.println("\nRetrieving past meetings from local store for " + EmployeeMain.EMPLOYEE_NAME + ":");
-
-        if (!serializedFile.exists()) {
-            System.out.println("No serialized meetings found.");
-            return;
-        }
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(serializedFile))) {
-            List<Meeting> meetings = (List<Meeting>) ois.readObject();
-
-            if (meetings.isEmpty()) {
-                System.out.println("No meetings found.");
-                return;
-            }
-            Meeting.getMeetingsString(meetings);
-        } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error retrieving meetings: " + e.getMessage());
-        }
-    }
-
-    private void viewMyMeetings() {
-        List<Meeting> myMeetings = controller.getMyMeetings();
-
-        if (myMeetings.isEmpty()) {
-            System.out.println("There are no meetings associated with you!");
-        } else {
-            System.out.println(Meeting.getMeetingsString(myMeetings));
         }
     }
 
@@ -183,6 +147,7 @@ public class EmployeeMenuConsole {
         );
 
         controller.sendCreateMeetingRequest(meeting);
+        writeMeetingsToFile();
     }
 
     private LocalDateTime validateDateTimeInput(String dateTimeInput) {
@@ -205,7 +170,7 @@ public class EmployeeMenuConsole {
 
         for (int i = 1; i <= meetings.size(); i++) {
             final Meeting meeting = meetings.get(i - 1);
-            System.out.printf("(%d) Topic: %s - Place%s%n", i, meeting.getTopic(), meeting.getPlace());
+            System.out.printf("(%d) Topic: %s - Place: %s%n", i, meeting.getTopic(), meeting.getPlace());
         }
 
         System.out.print("\nEnter the number of the meeting you want to modify: ");
@@ -314,28 +279,42 @@ public class EmployeeMenuConsole {
         System.out.println("Updating meeting...");
         // Send the updated meeting to the server
         controller.sendUpdateMeetingRequest(updatedMeeting);
+        writeMeetingsToFile();
     }
 
-    private static void syncMeetings() {
-        String fileName = "meetings_" + EmployeeMain.EMPLOYEE_NAME + ".txt";
+    private void syncMeetings() {
+        writeMeetingsToFile();
+    }
 
-//        try (Socket socket = new Socket(SERVER_HOST, SERVER_PORT);
-//             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-//             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//             BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-//
-//            out.println("SYNC " + employeeName);
-//
-//            String line;
-//            while ((line = in.readLine()) != null) {
-//                writer.write(line + "\n");
-//                if (line.equals("EOF")) break;
-//            }
-//            System.out.println("Meetings successfully synced with the server.");
-//
-//        } catch (IOException e) {
-//            System.err.println("Error syncing with the central server: " + e.getMessage());
-//        }
+    private void writeMeetingsToFile() {
+        try {
+            FileUtils.writeObjectsToFile(controller.getMyMeetings(), EmployeeMain.MEETINGS_FILE_PATH);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void retrieveMeetingsFromLocalStorage() {
+        try {
+            FileUtils.readAndPrintFile(EmployeeMain.MEETINGS_FILE_PATH);
+        } catch (IOException e) {
+            System.out.println("The file could not be read.");
+        }
+    }
+
+    private void viewMyMeetings() {
+        System.out.println("\nRetrieving your scheduled meetings from server...");
+
+        List<Meeting> myMeetings = controller.getMyMeetings();
+
+        if (myMeetings.isEmpty()) {
+            System.out.println("There are no meetings associated with you!");
+            return;
+        }
+
+        myMeetings.sort(Comparator.comparing(Meeting::getStartTimeTimestamp));
+        System.out.println("\nYour scheduled meetings:");
+        System.out.println(Meeting.getMeetingsString(myMeetings));
     }
 
     private static void exitSystem() {

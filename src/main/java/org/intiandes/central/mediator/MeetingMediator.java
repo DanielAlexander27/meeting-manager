@@ -4,8 +4,11 @@ import org.intiandes.central.observer.MeetingSubject;
 import org.intiandes.central.repository.meeting.MeetingRepository;
 import org.intiandes.central.server.ClientHandler;
 import org.intiandes.common.model.Meeting;
+import org.intiandes.common.request.UpdateMeetingRequest;
+import org.intiandes.common.response.CreatedMeetingResponse;
 import org.intiandes.common.response.GetEmployeesResponse;
 import org.intiandes.common.response.SendMeetingsResponse;
+import org.intiandes.common.response.UpdatedMeetingResponse;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,7 +24,7 @@ public class MeetingMediator {
         this.meetingSubjectPool = new HashMap<>();
     }
 
-    public void scheduleMeeting(Meeting newMeeting) {
+    public void scheduleMeeting(ClientHandler requester, Meeting newMeeting) {
         final Meeting meeting = meetingRepository.createMeeting(newMeeting);
         final MeetingSubject meetingSubject = new MeetingSubject();
 
@@ -33,20 +36,30 @@ public class MeetingMediator {
             }
         }
 
-        meetingSubject.notifyObservers(String.format("\nSERVER NOTIFICATION: A new meeting with the topic %s has been scheduled.\n", meeting.getTopic()));
+        meetingSubject.notifyObservers(String.format("\n\nSERVER NOTIFICATION: A new meeting with the topic %s has been scheduled.\n", meeting.getTopic()));
         meetingSubjectPool.put(meeting.getId(), meetingSubject);
+        requester.sendMessage(new CreatedMeetingResponse());
     }
 
-    public void updateMeeting(Meeting meetingToUpdate) {
+    public void updateMeeting(ClientHandler requester, Meeting meetingToUpdate) {
         final Meeting meeting = meetingRepository.updateMeeting(meetingToUpdate);
+
+        if (meetingSubjectPool.get(meetingToUpdate.getId()) == null) {
+            meetingSubjectPool.put(meetingToUpdate.getId(), new MeetingSubject());
+        }
+
         final MeetingSubject meetingSubject = meetingSubjectPool.get(meetingToUpdate.getId());
 
-        meeting.getGuestEmployees().forEach(employeeName ->
-                meetingSubject.registerObserver(ClientHandler.clientHandlers.get(employeeName))
-        );
+        meeting.getGuestEmployees().forEach(employeeName -> {
+            final ClientHandler clientHandler = ClientHandler.clientHandlers.get(employeeName);
+            if (clientHandler != null) {
+                meetingSubject.registerObserver(clientHandler);
+            }
+        });
 
-        final String message = String.format("\nSERVER NOTIFICATION: The meeting with the topic '%s' has been updated.\n", meetingToUpdate.getTopic());
+        final String message = String.format("\n\nSERVER NOTIFICATION: The meeting with the topic '%s' has been updated.\n", meetingToUpdate.getTopic());
         meetingSubject.notifyObservers(message);
+        requester.sendMessage(new UpdatedMeetingResponse());
     }
 
     public void sendEmployeeNames(ClientHandler clientHandler) {

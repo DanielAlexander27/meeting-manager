@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.net.Socket;
 
 public class EmployeeMain {
-//    private static String HOST_NAME = "localhost";
-        private static String HOST_NAME = "central-server";
+//            private static String HOST_NAME = "localhost";
+//            public static String EMPLOYEE_USERNAME = "bob-smith";
+
+    private static String HOST_NAME = "central-server";
     public static String EMPLOYEE_USERNAME = System.getenv("EMPLOYEE_USERNAME");
-//    public static String EMPLOYEE_USERNAME = "alice-white";
     public static String EMPLOYEE_NAME = System.getenv("EMPLOYEE_NAME");
+    public static String MEETINGS_FILE_PATH = "employee-output/meetings_" + EMPLOYEE_USERNAME + ".txt";
 
     public static void main(String[] args) throws IOException {
         EmployeeMenuConsole.showWelcome();
@@ -26,13 +28,5 @@ public class EmployeeMain {
         final EmployeeMenuConsole consoleProgram = new EmployeeMenuConsole(controller);
 
         consoleProgram.showMenu();
-//        ObjectOutputStream ous = new ObjectOutputStream(socket.getOutputStream());
-//
-//        ous.writeObject(
-//                new CreateMeetingRequest(
-//                        new Meeting("TOPIC", List.of("alice-white", "bob-smith"), "PLACE", System.currentTimeMillis(), System.currentTimeMillis(), "alice-white")
-//                )
-//        );
-//        ous.flush();
     }
 }

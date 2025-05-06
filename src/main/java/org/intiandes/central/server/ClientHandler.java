@@ -45,13 +45,13 @@ public class ClientHandler implements Runnable {
 
                 switch (receivedObject) {
                     case CreateMeetingRequest createMeetingRequest:
-                        meetingMediator.scheduleMeeting(createMeetingRequest.meeting);
+                        meetingMediator.scheduleMeeting(this, createMeetingRequest.meeting);
                         break;
                     case GetMeetingsRequest getMeetingsRequest:
                         meetingMediator.sendMeetingsAssociatedToEmployee(this, getMeetingsRequest.getEmployeeName());
                         break;
                     case UpdateMeetingRequest updateMeetingRequest:
-                        meetingMediator.updateMeeting(updateMeetingRequest.meeting);
+                        meetingMediator.updateMeeting(this, updateMeetingRequest.meeting);
                         break;
                     case GetEmployeesRequest ignored:
                         meetingMediator.sendEmployeeNames(this);
@@ -71,6 +71,7 @@ public class ClientHandler implements Runnable {
         try {
             this.objectOutputStream.writeObject(contentToSend);
             this.objectOutputStream.flush();
+            this.objectOutputStream.reset();
         } catch (IOException e) {
             closeEverything();
         }

@@ -1,0 +1,8 @@
+Topic: Topic4
+Place: Place1
+Start time: 2020-01-09T10:10
+End time: 2021-01-09T10:10
+Organizer: bob-smith
+Guests: bob-smith, alice-white
+
+

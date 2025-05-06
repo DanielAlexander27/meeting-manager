@@ -55,9 +55,10 @@ public class EmployeeServer {
 
                     if (objectReceived instanceof String message) {
                         System.out.println(message);
+                    } else {
+                        System.out.println(objectReceived);
+                        responseQueue.put(objectReceived);
                     }
-
-                    responseQueue.put(objectReceived);
                 } catch (IOException | InterruptedException | ClassNotFoundException e) {
                     closeEverything();
                     break;
