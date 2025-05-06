@@ -36,7 +36,7 @@ Una vez esté corriendo el contenedor del empleado correspondiente, los usuarios
     - Sincronizar reuniones con el almacenamiento centralizado.
     - Recuperar reuniones desde el almacenamiento local (pueden estar desactualizadas).
     - Salir de la aplicación.
-    -
+   
 ## Características
 - *Gestión de Empleados y Reuniones*: Cada empleado puede ver, crear y gestionar sus reuniones utilizando un menú fácil de usar en la consola.
 - *Configuración Multiusuario*: Entorno con contenedores Docker para simular varios empleados junto con un servidor central.
